@@ -1,9 +1,9 @@
-package uno.al.identifiers
+package aln.identifiers
 
 import org.lwjgl.openal.ALC10
 import org.lwjgl.system.MemoryUtil.NULL
 
-inline class ALCcontext(val L: Long) {
+inline class AlcContext(val L: Long) {
 
     fun makeCurrent() = ALC10.alcMakeContextCurrent(L)
     fun unmakeCurrent() = ALC10.alcMakeContextCurrent(NULL)
@@ -14,8 +14,8 @@ inline class ALCcontext(val L: Long) {
 
     fun destroy() = ALC10.alcDestroyContext(L)
 
-    val device: ALCdevice
-        get() = ALCdevice(ALC10.alcGetContextsDevice(L))
+    val device: AlcDevice
+        get() = AlcDevice(ALC10.alcGetContextsDevice(L))
 
     val isValid: Boolean
         get() = L != NULL
@@ -25,7 +25,7 @@ inline class ALCcontext(val L: Long) {
 
     companion object {
 
-        val current: ALCcontext
-            get() = ALCcontext(ALC10.alcGetCurrentContext())
+        val current: AlcContext
+            get() = AlcContext(ALC10.alcGetCurrentContext())
     }
 }

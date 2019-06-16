@@ -1,9 +1,6 @@
-package uno.al
+package aln
 
-import org.lwjgl.openal.AL10
-import org.lwjgl.openal.AL11
-import org.lwjgl.openal.ALC10
-import org.lwjgl.openal.ALC11
+import org.lwjgl.openal.*
 
 /*
  * OpenAL Helpers
@@ -35,59 +32,56 @@ import org.lwjgl.openal.ALC11
  * finding an appropriate buffer format, and getting readable strings for
  * channel configs and sample types. */
 
-//const char *FormatName(ALenum format)
-//{
-//    switch(format)
-//    {
-//        case AL_FORMAT_MONO8: return "Mono, U8";
-//        case AL_FORMAT_MONO16: return "Mono, S16";
-//        case AL_FORMAT_STEREO8: return "Stereo, U8";
-//        case AL_FORMAT_STEREO16: return "Stereo, S16";
-//    }
-//    return "Unknown Format";
-//}
-
-inline class ALCstringQuery(val i: Int) {
+inline class AlFormat(val i: Int){
     companion object {
-        val DEFAULT_DEVICE_SPECIFIER = ALCstringQuery(ALC10.ALC_DEFAULT_DEVICE_SPECIFIER)
-        val DEVICE_SPECIFIER = ALCstringQuery(ALC10.ALC_DEVICE_SPECIFIER)
-        val EXTENSIONS = ALCstringQuery(ALC10.ALC_EXTENSIONS)
+        val FORMAT_MONO8 = AlFormat(AL10.AL_FORMAT_MONO8)
+        val FORMAT_MONO16 = AlFormat(AL10.AL_FORMAT_MONO16)
+        val FORMAT_STEREO8 = AlFormat(AL10.AL_FORMAT_STEREO8)
+        val FORMAT_STEREO16 = AlFormat(AL10.AL_FORMAT_STEREO16)
+    }
+}
+
+inline class AlcStringQuery(val i: Int) {
+    companion object {
+        val DEFAULT_DEVICE_SPECIFIER = AlcStringQuery(ALC10.ALC_DEFAULT_DEVICE_SPECIFIER)
+        val DEVICE_SPECIFIER = AlcStringQuery(ALC10.ALC_DEVICE_SPECIFIER)
+        val EXTENSIONS = AlcStringQuery(ALC10.ALC_EXTENSIONS)
         // ALC11
-        val DEFAULT_ALL_DEVICES_SPECIFIER = ALCstringQuery(ALC11.ALC_DEFAULT_ALL_DEVICES_SPECIFIER)
-        val ALL_DEVICES_SPECIFIER = ALCstringQuery(ALC11.ALC_ALL_DEVICES_SPECIFIER)
-        val CAPTURE_DEVICE_SPECIFIER = ALCstringQuery(ALC11.ALC_CAPTURE_DEVICE_SPECIFIER)
-        val CAPTURE_DEFAULT_DEVICE_SPECIFIER = ALCstringQuery(ALC11.ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER)
+        val DEFAULT_ALL_DEVICES_SPECIFIER = AlcStringQuery(ALC11.ALC_DEFAULT_ALL_DEVICES_SPECIFIER)
+        val ALL_DEVICES_SPECIFIER = AlcStringQuery(ALC11.ALC_ALL_DEVICES_SPECIFIER)
+        val CAPTURE_DEVICE_SPECIFIER = AlcStringQuery(ALC11.ALC_CAPTURE_DEVICE_SPECIFIER)
+        val CAPTURE_DEFAULT_DEVICE_SPECIFIER = AlcStringQuery(ALC11.ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER)
     }
 }
 
-inline class ALCerror(val i: Int) {
+inline class AlcError(val i: Int) {
     companion object {
-        val NO_ERROR = ALCerror(ALC10.ALC_NO_ERROR)
-        val INVALID_DEVICE = ALCerror(ALC10.ALC_INVALID_DEVICE)
-        val INVALID_CONTEXT = ALCerror(ALC10.ALC_INVALID_CONTEXT)
-        val INVALID_ENUM = ALCerror(ALC10.ALC_INVALID_ENUM)
-        val INVALID_VALUE = ALCerror(ALC10.ALC_INVALID_VALUE)
-        val OUT_OF_MEMORY = ALCerror(ALC10.ALC_OUT_OF_MEMORY)
+        val NO_ERROR = AlcError(ALC10.ALC_NO_ERROR)
+        val INVALID_DEVICE = AlcError(ALC10.ALC_INVALID_DEVICE)
+        val INVALID_CONTEXT = AlcError(ALC10.ALC_INVALID_CONTEXT)
+        val INVALID_ENUM = AlcError(ALC10.ALC_INVALID_ENUM)
+        val INVALID_VALUE = AlcError(ALC10.ALC_INVALID_VALUE)
+        val OUT_OF_MEMORY = AlcError(ALC10.ALC_OUT_OF_MEMORY)
     }
 }
 
-inline class ALerror(val i: Int) {
+inline class AlError(val i: Int) {
     companion object {
-        val NO_ERROR = ALerror(AL10.AL_NO_ERROR)
-        val INVALID_NAME = ALerror(AL10.AL_INVALID_NAME)
-        val INVALID_ENUM = ALerror(AL10.AL_INVALID_ENUM)
-        val INVALID_VALUE = ALerror(AL10.AL_INVALID_VALUE)
-        val INVALID_OPERATION = ALerror(AL10.AL_INVALID_OPERATION)
-        val OUT_OF_MEMORY = ALerror(ALC10.ALC_OUT_OF_MEMORY)
+        val NO_ERROR = AlError(AL10.AL_NO_ERROR)
+        val INVALID_NAME = AlError(AL10.AL_INVALID_NAME)
+        val INVALID_ENUM = AlError(AL10.AL_INVALID_ENUM)
+        val INVALID_VALUE = AlError(AL10.AL_INVALID_VALUE)
+        val INVALID_OPERATION = AlError(AL10.AL_INVALID_OPERATION)
+        val OUT_OF_MEMORY = AlError(ALC10.ALC_OUT_OF_MEMORY)
     }
 }
 
-inline class ALstringQuery(val i: Int) {
+inline class AlStringQuery(val i: Int) {
     companion object {
-        val VERSION = ALstringQuery(AL10.AL_VERSION)
-        val RENDERER = ALstringQuery(AL10.AL_RENDERER)
-        val VENDOR = ALstringQuery(AL10.AL_VENDOR)
-        val EXTENSIONS = ALstringQuery(AL10.AL_EXTENSIONS)
+        val VERSION = AlStringQuery(AL10.AL_VERSION)
+        val RENDERER = AlStringQuery(AL10.AL_RENDERER)
+        val VENDOR = AlStringQuery(AL10.AL_VENDOR)
+        val EXTENSIONS = AlStringQuery(AL10.AL_EXTENSIONS)
     }
 }
 
@@ -131,17 +125,37 @@ inline class SourceParam(val i: Int) {
 
 inline class SourceState(val i: Int) {
     companion object {
-        val initial = SourceState(AL10.AL_INITIAL)
-        val playing = SourceState(AL10.AL_PLAYING)
-        val paused = SourceState(AL10.AL_PAUSED)
-        val stopped = SourceState(AL10.AL_STOPPED)
+        val INITIAL = SourceState(AL10.AL_INITIAL)
+        val PLAYING = SourceState(AL10.AL_PLAYING)
+        val PAUSED = SourceState(AL10.AL_PAUSED)
+        val STOPPED = SourceState(AL10.AL_STOPPED)
     }
 }
 
 inline class SourceType(val i: Int) {
     companion object {
-        val undetermined = SourceType(AL11.AL_UNDETERMINED)
-        val static = SourceType(AL11.AL_STATIC)
-        val streaming = SourceType(AL11.AL_STREAMING)
+        val UNDETERMINED = SourceType(AL11.AL_UNDETERMINED)
+        val STATIC = SourceType(AL11.AL_STATIC)
+        val STREAMING = SourceType(AL11.AL_STREAMING)
+    }
+}
+
+inline class GetBuffer(val i: Int) {
+    companion object {
+        val FREQUENCY = GetBuffer(AL11.AL_FREQUENCY)
+        val SIZE = GetBuffer(AL11.AL_SIZE)
+        val BITS = GetBuffer(AL11.AL_BITS)
+        val CHANNELS = GetBuffer(AL11.AL_CHANNELS)
+    }
+}
+
+inline class ContextAttribute(val i: Int) {
+    companion object {
+        val FREQUENCY = ContextAttribute(ALC10.ALC_FREQUENCY)
+        val REFRESH = ContextAttribute(ALC10.ALC_REFRESH)
+        val SYNC = ContextAttribute(ALC10.ALC_SYNC)
+        val MONO_SOURCES = ContextAttribute(ALC11.ALC_MONO_SOURCES)
+        val STEREO_SOURCES = ContextAttribute(ALC11.ALC_STEREO_SOURCES)
+        val MAX_AUXILIARY_SENDS = ContextAttribute(EXTEfx.ALC_MAX_AUXILIARY_SENDS)
     }
 }

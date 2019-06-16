@@ -25,11 +25,12 @@ dependencies {
 
     implementation "$kotlin-stdlib-jdk8"
     implementation "$kotlin-reflect"
-    api "com.github.kotlin-graphics:gln:$gln_version".toString()
+    testImplementation "io.kotlintest:kotlintest-runner-junit5:$kotlintest_version".toString()
+    api "com.github.kotlin-graphics.glm:glm:-SNAPSHOT"
 
-    ["", "-openal"].each {
+    ["", "-openal", "-stb"].each {
         implementation "org.lwjgl:lwjgl$it:$lwjgl_version"
-        if (it != "-vulkan" && it != "-jawt")
+//        if (it != "-vulkan" && it != "-jawt")
             runtime "org.lwjgl:lwjgl$it:$lwjgl_version:natives-$lwjgl_natives"
     }
     testCompile group: 'junit', name: 'junit', version: '4.12'

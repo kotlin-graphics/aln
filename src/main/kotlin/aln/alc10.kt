@@ -1,20 +1,19 @@
-package uno.al
+package aln
 
+import aln.identifiers.AlcContext
+import aln.identifiers.AlcDevice
 import glm_.BYTES
 import kool.Adr
 import kool.Stack
 import kool.adr
-import kool.toBuffer
 import org.lwjgl.openal.ALC10
 import org.lwjgl.openal.ALC11
-import org.lwjgl.system.MemoryUtil.NULL
+import org.lwjgl.system.MemoryUtil
 import org.lwjgl.system.MemoryUtil.memGetInt
-import uno.al.identifiers.ALCcontext
-import uno.al.identifiers.ALCdevice
-import java.nio.Buffer
+import java.nio.IntBuffer
 
-
-object alc {
+/** Native bindings to ALC 1.0 functionality. */
+interface alc10 {
 
     // --- [ alcOpenDevice ] ---
 
@@ -26,11 +25,8 @@ object alc {
      *
      * @param deviceSpecifier the requested device or device configuration
      */
-    fun openDevice(deviceSpecifier: CharSequence?): ALCdevice = Stack {
-        it.nUTF8Safe(deviceSpecifier, true)
-        val deviceSpecifierEncoded = if (deviceSpecifier == null) NULL else it.pointerAddress
-        ALCdevice(ALC10.nalcOpenDevice(deviceSpecifierEncoded))
-    }
+    fun openDevice(deviceSpecifier: CharSequence): AlcDevice =
+            AlcDevice(Stack.pointerAddress { ALC10.alcOpenDevice(deviceSpecifier) })
 
     // --- [ alcCloseDevice ] ---
 
@@ -40,20 +36,20 @@ object alc {
      * <p>The return code will be ALC_TRUE or ALC_FALSE, indicating success or failure. Failure will occur if all the device's contexts and buffers have not been
      * destroyed. Once closed, the {@code deviceHandle} is invalid.</p>
      *
-     * @param device    the device to close
+     * @param device the device to close
      */
-    fun closeDevice(device: ALCdevice): Boolean = ALC10.alcCloseDevice(device.handle)
+    fun closeDevice(device: AlcDevice) = ALC10.alcCloseDevice(device.handle)
 
     // --- [ alcCreateContext ] ---
 
     /**
      * Creates an AL context.
      *
-     * @param device       a valid device
+     * @param device a valid device
      * @param attrList     null or a zero terminated list of integer pairs composed of valid ALC attribute tokens and requested values. One of:<br><table><tr><td>{@link #ALC_FREQUENCY FREQUENCY}</td><td>{@link #ALC_REFRESH REFRESH}</td><td>{@link #ALC_SYNC SYNC}</td><td>{@link ALC11#ALC_MONO_SOURCES MONO_SOURCES}</td><td>{@link ALC11#ALC_STEREO_SOURCES STEREO_SOURCES}</td></tr></table>
      */
-    fun createContext(device: ALCdevice, attrList: IntArray? = null): ALCcontext =
-            ALCcontext(Stack { ALC10.nalcCreateContext(device.handle, attrList?.toBuffer(it)?.adr ?: NULL) })
+    fun createContext(device: AlcDevice, attrList: IntBuffer): AlcContext =
+            AlcContext(ALC10.alcCreateContext(device.handle, attrList))
 
     // --- [ alcMakeContextCurrent ] ---
 
@@ -68,7 +64,8 @@ object alc {
      *
      * @param context the context to make current
      */
-    fun makeContextCurrent(context: ALCcontext): Boolean = ALC10.alcMakeContextCurrent(context.L)
+    fun makeContextCurrent(context: AlcContext): Boolean =
+            ALC10.alcMakeContextCurrent(context.L)
 
     // --- [ alcProcessContext ] ---
 
@@ -82,7 +79,8 @@ object alc {
      *
      * @param context the context to mark for processing
      */
-    fun processContext(context: ALCcontext) = ALC10.alcProcessContext(context.L)
+    fun processContext(context: AlcContext) =
+            ALC10.alcProcessContext(context.L)
 
     // --- [ alcSuspendContext ] ---
 
@@ -94,7 +92,8 @@ object alc {
      *
      * @param context the context to mark as suspended
      */
-    fun suspendContext(context: ALCcontext) = ALC10.alcSuspendContext(context.L)
+    fun suspendContext(context: AlcContext) =
+            ALC10.alcSuspendContext(context.L)
 
     // --- [ alcDestroyContext ] ---
 
@@ -107,13 +106,14 @@ object alc {
      *
      * @param context the context to destroy
      */
-    fun destroyContext(context: ALCcontext) = ALC10.alcDestroyContext(context.L)
+    fun destroyContext(context: AlcContext) =
+            ALC10.alcDestroyContext(context.L)
 
     // --- [ alcGetCurrentContext ] ---
 
     /** Queries for, and obtains a handle to, the current context for the application. If there is no current context, {@code NULL} is returned. */
-    val currentContext: ALCcontext
-        get() = ALCcontext(ALC10.alcGetCurrentContext())
+    val currentContext: AlcContext
+        get() = AlcContext(ALC10.alcGetCurrentContext())
 
     // --- [ alcGetContextsDevice ] ---
 
@@ -122,20 +122,22 @@ object alc {
      *
      * @param context the context to query
      */
-    fun getContextsDevice(context: ALCcontext): ALCdevice = ALCdevice(ALC10.alcGetContextsDevice(context.L))
+    fun getContextsDevice(context: AlcContext): AlcDevice =
+            AlcDevice(ALC10.alcGetContextsDevice(context.L))
 
     // --- [ alcIsExtensionPresent ] ---
 
     /**
      * Verifies that a given extension is available for the current context and the device it is associated with.
      *
-     * <p>Invalid and unsupported string tokens return ALC_FALSE. A {@code NULL} deviceHandle is acceptable. {@code extName} is not case sensitive – the implementation
+     * <p>Invalid and unsupported string tokens return ALC_FALSE. A {@code NULL} device is acceptable. {@code extName} is not case sensitive – the implementation
      * will convert the name to all upper-case internally (and will express extension names in upper-case).</p>
      *
-     * @param device       the device to query
+     * @param device the device to query
      * @param extName      the extension name
      */
-    fun isExtensionPresent(device: ALCdevice, extName: CharSequence): Boolean = ALC10.alcIsExtensionPresent(device.handle, extName)
+    fun isExtensionPresent(device: AlcDevice, extName: CharSequence): Boolean =
+            ALC10.alcIsExtensionPresent(device.handle, extName)
 
     // --- [ alcGetProcAddress ] ---
 
@@ -151,7 +153,8 @@ object alc {
      * @param device the device to query
      * @param funcName     the function name
      */
-    fun getProcAddress(device: ALCdevice, funcName: CharSequence): Adr = ALC10.alcGetProcAddress(device.handle, funcName)
+    fun getProcAddress(device: AlcDevice, funcName: CharSequence): Adr =
+            ALC10.alcGetProcAddress(device.handle, funcName)
 
     // --- [ alcGetEnumValue ] ---
 
@@ -164,7 +167,8 @@ object alc {
      * @param device the device to query
      * @param enumName     the enum name
      */
-    fun getEnumValue(device: ALCdevice, enumName: CharSequence): Int = ALC10.alcGetEnumValue(device.handle, enumName)
+    fun getEnumValue(device: AlcDevice, enumName: CharSequence): Int =
+            ALC10.alcGetEnumValue(device.handle, enumName)
 
     // --- [ alcGetError ] ---
 
@@ -178,7 +182,8 @@ object alc {
      *
      * @param device the device to query
      */
-    fun getError(device: ALCdevice): ALCerror = ALCerror(ALC10.alcGetError(device.handle))
+    fun getError(device: AlcDevice): AlcError =
+            AlcError(ALC10.alcGetError(device.handle))
 
     // --- [ alcGetString ] ---
 
@@ -190,83 +195,21 @@ object alc {
      * @param device the device to query
      * @param token        the information to query. One of:<br><table><tr><td>{@link #ALC_DEFAULT_DEVICE_SPECIFIER DEFAULT_DEVICE_SPECIFIER}</td><td>{@link #ALC_DEVICE_SPECIFIER DEVICE_SPECIFIER}</td><td>{@link #ALC_EXTENSIONS EXTENSIONS}</td></tr><tr><td>{@link ALC11#ALC_CAPTURE_DEFAULT_DEVICE_SPECIFIER CAPTURE_DEFAULT_DEVICE_SPECIFIER}</td><td>{@link ALC11#ALC_CAPTURE_DEVICE_SPECIFIER CAPTURE_DEVICE_SPECIFIER}</td></tr></table>
      */
-    fun getString(device: ALCdevice, token: ALCstringQuery): String? = ALC10.alcGetString(device.handle, token.i)
+    fun getString(device: AlcDevice, token: AlcStringQuery): String =
+            ALC10.alcGetString(device.handle, token.i)!!
 
-    // --- [ alcGetIntegerv ] ---
+    // --- [ alcGetInteger* ] ---
 
-    fun getMajorVersion(device: ALCdevice): Int = ALC10.alcGetInteger(device.handle, ALC10.ALC_MAJOR_VERSION)
-    fun getMinorVersion(device: ALCdevice): Int = ALC10.alcGetInteger(device.handle, ALC10.ALC_MINOR_VERSION)
-    fun getAllAttributes(device: ALCdevice): IntArray = Stack { s ->
+    fun getMajorVersion(device: AlcDevice): Int = ALC10.alcGetInteger(device.handle, ALC10.ALC_MAJOR_VERSION)
+    fun getMinorVersion(device: AlcDevice): Int = ALC10.alcGetInteger(device.handle, ALC10.ALC_MINOR_VERSION)
+    fun getAllAttributes(device: AlcDevice): MutableMap<ContextAttribute, Int> = Stack { s ->
         val count = ALC10.alcGetInteger(device.handle, ALC10.ALC_ATTRIBUTES_SIZE)
         val pAttributes = s.mallocInt(count).adr
         ALC10.nalcGetIntegerv(device.handle, ALC10.ALC_ALL_ATTRIBUTES, count, pAttributes)
-        IntArray(count) { memGetInt(pAttributes + it * Int.BYTES) }
+        val res = mutableMapOf<ContextAttribute, Int>()
+        for(i in 0 until count / 2)
+            res[ContextAttribute(memGetInt(pAttributes + i * 2))] = memGetInt(pAttributes + i * 2 + 1)
+        res
     }
-    fun getCaptureSamples(device: ALCdevice): Int = ALC10.alcGetInteger(device.handle, ALC11.ALC_CAPTURE_SAMPLES)
-
-    // ----------------------------------------------------- ALC11 -----------------------------------------------------
-
-
-    // --- [ alcCaptureOpenDevice ] ---
-
-    /**
-     * Allows the application to connect to a capture device.
-     *
-     * <p>The {@code device} argument is a null terminated string that requests a certain device or device configuration. If {@code NULL} is specified, the implementation
-     * will provide an implementation specific default.</p>
-     *
-     * @param device the device or device configuration
-     * @param frequency  the audio frequency
-     * @param format     the audio format
-     * @param samples    the number of sample frames to buffer in the AL
-     */
-    fun captureOpenDevice(device: CharSequence?, frequency: Int, format: Int, samples: Int): ALCdevice =
-            ALCdevice(ALC11.alcCaptureOpenDevice(device, frequency, format, samples))
-
-    // --- [ alcCaptureCloseDevice ] ---
-
-    /**
-     * Allows the application to disconnect from a capture device.
-     *
-     * @param device the capture device to close
-     */
-    fun captureCloseDevice( device: ALCdevice): Boolean = ALC11.alcCaptureCloseDevice(device.handle)
-
-    // --- [ alcCaptureStart ] ---
-
-    /**
-     * Starts recording audio on the specific capture device.
-     *
-     * <p>Once started, the device will record audio to an internal ring buffer, the size of which was specified when opening the device. The application may
-     * query the capture device to discover how much data is currently available via the alcGetInteger with the ALC_CAPTURE_SAMPLES token. This will report the
-     * number of sample frames currently available.</p>
-     *
-     * @param device the capture device
-     */
-    fun captureStart(device: ALCdevice) = ALC11.alcCaptureStart(device.handle)
-
-    // --- [ alcCaptureStop ] ---
-
-    /**
-     * Halts audio capturing without closing the capture device.
-     *
-     * <p>The implementation is encouraged to optimize for this case. The amount of audio samples available after restarting a stopped capture device is reset to
-     * zero. The application does not need to stop the capture device to read from it.</p>
-     *
-     * @param device the capture device
-     */
-    fun captureStop(device: ALCdevice) = ALC11.alcCaptureStop(device.handle)
-
-    // --- [ alcCaptureSamples ] ---
-
-    /**
-     * Obtains captured audio samples from the AL.
-     *
-     * <p>The implementation may defer conversion and resampling until this point. Requesting more sample frames than are currently available is an error.</p>
-     *
-     * @param device  the capture device
-     * @param buffer  the buffer that will receive the samples. It must be big enough to contain at least {@code samples} sample frames.
-     * @param samples the number of sample frames to obtain
-     */
-    fun captureSamples(device: ALCdevice, buffer: Buffer, samples: Int) = ALC11.nalcCaptureSamples(device.handle, buffer.adr, samples)
+    fun getCaptureSamples(device: AlcDevice): Int = ALC10.alcGetInteger(device.handle, ALC11.ALC_CAPTURE_SAMPLES)
 }

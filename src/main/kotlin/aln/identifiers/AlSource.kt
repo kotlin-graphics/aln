@@ -1,13 +1,13 @@
-package uno.al.identifiers
+package aln.identifiers
 
+import aln.SourceState
+import aln.SourceType
+import aln.al
 import glm_.bool
 import glm_.vec3.Vec3
 import gln.vec3Address
 import kool.*
 import org.lwjgl.openal.AL10
-import uno.al.SourceState
-import uno.al.SourceType
-import uno.al.al
 import java.nio.IntBuffer
 
 inline class AlSource(val name: Int) {
@@ -61,7 +61,8 @@ inline class AlSource(val name: Int) {
     infix fun queueBuffers(buffer: AlBuffer) = AL10.alSourceQueueBuffers(name, buffer.name)
 
     infix fun unqueueBuffers(buffers: AlBuffers) = AL10.nalSourceUnqueueBuffers(name, buffers.rem, buffers.adr)
-    infix fun unqueueBuffers(buffer: AlBuffer) = Stack.intAddress(buffer.name) { AL10.nalSourceUnqueueBuffers(name, 1, it) }
+    val unqueueBuffer: AlBuffer
+        get() = AlBuffer(Stack.intAddress { AL10.nalSourceUnqueueBuffers(name, 1, it) })
 
     fun play() = AL10.alSourcePlay(name)
     fun pause() = AL10.alSourcePause(name)

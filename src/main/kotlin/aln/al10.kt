@@ -1,13 +1,17 @@
-package uno.al
+package aln
 
+import aln.identifiers.AlBuffer
+import aln.identifiers.AlBuffers
+import aln.identifiers.AlSource
+import aln.identifiers.AlSources
 import glm_.vec3.Vec3
 import gln.vec3Address
+import kool.Adr
 import kool.Stack
+import kool.adr
+import kool.rem
 import org.lwjgl.openal.AL10
-import uno.al.identifiers.AlBuffer
-import uno.al.identifiers.AlBuffers
-import uno.al.identifiers.AlSource
-import uno.al.identifiers.AlSources
+import java.nio.Buffer
 import java.nio.FloatBuffer
 import java.nio.IntBuffer
 
@@ -178,7 +182,7 @@ interface al10 {
      *
      * @param paramName the parameter to query. One of:<br><table><tr><td>{@link #AL_VENDOR VENDOR}</td><td>{@link #AL_VERSION VERSION}</td><td>{@link #AL_RENDERER RENDERER}</td><td>{@link #AL_EXTENSIONS EXTENSIONS}</td></tr></table>
      */
-    fun getString(paramName: ALstringQuery): String? = AL10.alGetString(paramName.i)
+    fun getString(paramName: AlStringQuery): String? = AL10.alGetString(paramName.i)
 
     // --- [ alDistanceModel ] ---
 
@@ -309,7 +313,7 @@ interface al10 {
     fun genSources(size: Int) = AlSources(size).apply(::genSources)
 
     /** Requests a number of source names. */
-    fun genSources(): AlSource = AlSource(AL10.alGenSources())
+    fun genSources(): AlSource = AlSource(Stack.intAddress { AL10.nalGenSources(1, it) })
 
     // --- [ alDeleteSources ] ---
 
@@ -463,8 +467,8 @@ interface al10 {
      *
      * @param source the target source
      */
-    fun sourceUnqueueBuffers(source: AlSource, buffer: AlBuffer) =
-            Stack.intAddress(buffer.name) { AL10.nalSourceUnqueueBuffers(source.name, 1, it) }
+    infix fun sourceUnqueueBuffers(source: AlSource): AlBuffer =
+            AlBuffer(Stack.intAddress { AL10.nalSourceUnqueueBuffers(source.name, 1, it) })
 
     // --- [ alSourcePlay ] ---
 
@@ -575,172 +579,89 @@ interface al10 {
     fun genBuffers(buffers: AlBuffers) =
             AL10.nalGenBuffers(buffers.rem, buffers.adr)
 
+    /**
+     * Requests a number of buffer names.
+     *
+     * @param buffers the buffer that will receive the buffer names
+     */
+    fun genBuffers(size: Int) = AlBuffers(size).apply(::genBuffers)
+
     /** Requests a number of buffer names. */
-    fun genBuffers(): AlBuffer
-    {
-        MemoryStack stack = stackGet (); int stackPointer = stack . getPointer ();
-        try {
-            IntBuffer bufferNames = stack . callocInt (1);
-            nalGenBuffers(1, memAddress(bufferNames));
-            return bufferNames.get(0);
-        } finally {
-            stack.setPointer(stackPointer);
-        }
-    }
+    fun genBuffers(): AlBuffer = AlBuffer(AL10.alGenBuffers())
 
     // --- [ alDeleteBuffers ] ---
 
     /**
-     * Unsafe version of: {@link #alDeleteBuffers DeleteBuffers}
-     *
-     * @param n the number of buffers to delete
-     */
-    public static void nalDeleteBuffers(int n, long bufferNames)
-    {
-        long __functionAddress = AL . getICD ().alDeleteBuffers;
-        invokePV(n, bufferNames, __functionAddress);
-    }
-
-    /**
      * Requests the deletion of a number of buffers.
      *
-     * @param bufferNames the buffers to delete
+     * @param buffers the buffers to delete
      */
-    @NativeType("ALvoid")
-    public static void alDeleteBuffers(@NativeType("ALuint const *") IntBuffer bufferNames)
-    {
-        nalDeleteBuffers(bufferNames.remaining(), memAddress(bufferNames));
-    }
+    fun deleteBuffers(buffers: AlBuffers) = AL10.nalDeleteBuffers(buffers.rem, buffers.adr)
 
     /** Requests the deletion of a number of buffers. */
-    @NativeType("ALvoid")
-    public static void alDeleteBuffers(@NativeType("ALuint const *") int bufferName)
-    {
-        MemoryStack stack = stackGet (); int stackPointer = stack . getPointer ();
-        try {
-            IntBuffer bufferNames = stack . ints (bufferName);
-            nalDeleteBuffers(1, memAddress(bufferNames));
-        } finally {
-            stack.setPointer(stackPointer);
-        }
-    }
+    fun deleteBuffers(buffer: AlBuffer) = AL10.alDeleteBuffers(buffer.name)
 
     // --- [ alIsBuffer ] ---
 
     /**
      * Verifies whether the specified object name is a buffer name.
      *
-     * @param bufferName a value that may be a buffer name
+     * @param buffer a value that may be a buffer name
      */
-    @NativeType("ALboolean")
-    public static boolean alIsBuffer(@NativeType("ALuint") int bufferName)
-    {
-        long __functionAddress = AL . getICD ().alIsBuffer;
-        return invokeZ(bufferName, __functionAddress);
-    }
+    fun isBuffer(buffer: AlBuffer): Boolean =
+            AL10.alIsBuffer(buffer.name)
 
-    // --- [ alGetBufferf ] ---
+    // --- [ alGetBufferf ] --- unused
 
-    /** Unsafe version of: {@link #alGetBufferf GetBufferf} */
-    public static void nalGetBufferf(int bufferName, int paramName, long value)
-    {
-        long __functionAddress = AL . getICD ().alGetBufferf;
-        invokePV(bufferName, paramName, value, __functionAddress);
-    }
-
-    /**
-     * Returns the float value of the specified buffer parameter.
-     *
-     * @param bufferName the buffer to query
-     * @param paramName  the parameter to query. One of:<br><table><tr><td>{@link #AL_FREQUENCY FREQUENCY}</td><td>{@link #AL_BITS BITS}</td><td>{@link #AL_CHANNELS CHANNELS}</td><td>{@link #AL_SIZE SIZE}</td></tr></table>
-     * @param value      the parameter value
-     */
-    @NativeType("ALvoid")
-    public static void alGetBufferf(@NativeType("ALuint") int bufferName, @NativeType("ALenum") int paramName, @NativeType("ALfloat *") FloatBuffer value)
-    {
-        if (CHECKS) {
-            check(value, 1);
-        }
-        nalGetBufferf(bufferName, paramName, memAddress(value));
-    }
-
-    /**
-     * Returns the float value of the specified buffer parameter.
-     *
-     * @param bufferName the buffer to query
-     * @param paramName  the parameter to query. One of:<br><table><tr><td>{@link #AL_FREQUENCY FREQUENCY}</td><td>{@link #AL_BITS BITS}</td><td>{@link #AL_CHANNELS CHANNELS}</td><td>{@link #AL_SIZE SIZE}</td></tr></table>
-     */
-    @NativeType("ALvoid")
-    public static float alGetBufferf(@NativeType("ALuint") int bufferName, @NativeType("ALenum") int paramName)
-    {
-        MemoryStack stack = stackGet (); int stackPointer = stack . getPointer ();
-        try {
-            FloatBuffer value = stack . callocFloat (1);
-            nalGetBufferf(bufferName, paramName, memAddress(value));
-            return value.get(0);
-        } finally {
-            stack.setPointer(stackPointer);
-        }
-    }
+//    /**
+//     * Returns the float value of the specified buffer parameter.
+//     *
+//     * @param bufferName the buffer to query
+//     * @param paramName  the parameter to query. One of:<br><table><tr><td>{@link #AL_FREQUENCY FREQUENCY}</td><td>{@link #AL_BITS BITS}</td><td>{@link #AL_CHANNELS CHANNELS}</td><td>{@link #AL_SIZE SIZE}</td></tr></table>
+//     * @param value      the parameter value
+//     */
+//    @NativeType("ALvoid")
+//    public static void alGetBufferf(@NativeType("ALuint") int bufferName, @NativeType("ALenum") int paramName, @NativeType("ALfloat *") FloatBuffer value)
+//    {
+//        if (CHECKS) {
+//            check(value, 1);
+//        }
+//        nalGetBufferf(bufferName, paramName, memAddress(value));
+//    }
+//
+//    /**
+//     * Returns the float value of the specified buffer parameter.
+//     *
+//     * @param bufferName the buffer to query
+//     * @param paramName  the parameter to query. One of:<br><table><tr><td>{@link #AL_FREQUENCY FREQUENCY}</td><td>{@link #AL_BITS BITS}</td><td>{@link #AL_CHANNELS CHANNELS}</td><td>{@link #AL_SIZE SIZE}</td></tr></table>
+//     */
+//    @NativeType("ALvoid")
+//    public static float alGetBufferf(@NativeType("ALuint") int bufferName, @NativeType("ALenum") int paramName)
+//    {
+//        MemoryStack stack = stackGet (); int stackPointer = stack . getPointer ();
+//        try {
+//            FloatBuffer value = stack . callocFloat (1);
+//            nalGetBufferf(bufferName, paramName, memAddress(value));
+//            return value.get(0);
+//        } finally {
+//            stack.setPointer(stackPointer);
+//        }
+//    }
 
     // --- [ alGetBufferi ] ---
 
-    /** Unsafe version of: {@link #alGetBufferi GetBufferi} */
-    public static void nalGetBufferi(int bufferName, int paramName, long value)
-    {
-        long __functionAddress = AL . getICD ().alGetBufferi;
-        invokePV(bufferName, paramName, value, __functionAddress);
-    }
-
     /**
      * Returns the integer value of the specified buffer parameter.
      *
-     * @param bufferName the buffer to query
-     * @param paramName  the parameter to query. One of:<br><table><tr><td>{@link #AL_FREQUENCY FREQUENCY}</td><td>{@link #AL_BITS BITS}</td><td>{@link #AL_CHANNELS CHANNELS}</td><td>{@link #AL_SIZE SIZE}</td></tr></table>
-     * @param value      the parameter value
-     */
-    @NativeType("ALvoid")
-    public static void alGetBufferi(@NativeType("ALuint") int bufferName, @NativeType("ALenum") int paramName, @NativeType("ALint *") IntBuffer value)
-    {
-        if (CHECKS) {
-            check(value, 1);
-        }
-        nalGetBufferi(bufferName, paramName, memAddress(value));
-    }
-
-    /**
-     * Returns the integer value of the specified buffer parameter.
-     *
-     * @param bufferName the buffer to query
+     * @param buffer the buffer to query
      * @param paramName  the parameter to query. One of:<br><table><tr><td>{@link #AL_FREQUENCY FREQUENCY}</td><td>{@link #AL_BITS BITS}</td><td>{@link #AL_CHANNELS CHANNELS}</td><td>{@link #AL_SIZE SIZE}</td></tr></table>
      */
-    @NativeType("ALvoid")
-    public static int alGetBufferi(@NativeType("ALuint") int bufferName, @NativeType("ALenum") int paramName)
-    {
-        MemoryStack stack = stackGet (); int stackPointer = stack . getPointer ();
-        try {
-            IntBuffer value = stack . callocInt (1);
-            nalGetBufferi(bufferName, paramName, memAddress(value));
-            return value.get(0);
-        } finally {
-            stack.setPointer(stackPointer);
-        }
-    }
+    fun getBuffer(buffer: AlBuffer, paramName: GetBuffer): Int =
+        Stack.intAddress { AL10.nalGetBufferi(buffer.name, paramName.i, it) }
 
     // --- [ alBufferData ] ---
 
     /**
-     * Unsafe version of: {@link #alBufferData BufferData}
-     *
-     * @param size the data buffer size, in bytes
-     */
-    public static void nalBufferData(int bufferName, int format, long data , int size, int frequency)
-    {
-        long __functionAddress = AL . getICD ().alBufferData;
-        invokePV(bufferName, format, data, size, frequency, __functionAddress);
-    }
-
-    /**
      * Sets the sample data of the specified buffer.
      *
      * <p>The data specified is copied to an internal software, or if possible, hardware buffer. The implementation is free to apply decompression, conversion,
@@ -756,148 +677,26 @@ interface al10 {
      * <p>Buffers containing audio data with more than one channel will be played without 3D spatialization features – these formats are normally used for
      * background music.</p>
      *
-     * @param bufferName the buffer to modify
+     * @param buffer the buffer to modify
      * @param format     the data format. One of:<br><table><tr><td>{@link #AL_FORMAT_MONO8 FORMAT_MONO8}</td><td>{@link #AL_FORMAT_MONO16 FORMAT_MONO16}</td><td>{@link #AL_FORMAT_STEREO8 FORMAT_STEREO8}</td><td>{@link #AL_FORMAT_STEREO16 FORMAT_STEREO16}</td></tr></table>
      * @param data       the sample data
      * @param frequency  the data frequency
      */
-    @NativeType("ALvoid")
-    public static void alBufferData(@NativeType("ALuint") int bufferName, @NativeType("ALenum") int format, @NativeType("ALvoid const *") ByteBuffer data , @NativeType("ALsizei") int frequency)
-    {
-        nalBufferData(bufferName, format, memAddress(data), data.remaining(), frequency);
-    }
-
-    /**
-     * Sets the sample data of the specified buffer.
-     *
-     * <p>The data specified is copied to an internal software, or if possible, hardware buffer. The implementation is free to apply decompression, conversion,
-     * resampling, and filtering as needed.</p>
-     *
-     * <p>8-bit data is expressed as an unsigned value over the range 0 to 255, 128 being an audio output level of zero.</p>
-     *
-     * <p>16-bit data is expressed as a signed value over the range -32768 to 32767, 0 being an audio output level of zero. Byte order for 16-bit values is
-     * determined by the native format of the CPU.</p>
-     *
-     * <p>Stereo data is expressed in an interleaved format, left channel sample followed by the right channel sample.</p>
-     *
-     * <p>Buffers containing audio data with more than one channel will be played without 3D spatialization features – these formats are normally used for
-     * background music.</p>
-     *
-     * @param bufferName the buffer to modify
-     * @param format     the data format. One of:<br><table><tr><td>{@link #AL_FORMAT_MONO8 FORMAT_MONO8}</td><td>{@link #AL_FORMAT_MONO16 FORMAT_MONO16}</td><td>{@link #AL_FORMAT_STEREO8 FORMAT_STEREO8}</td><td>{@link #AL_FORMAT_STEREO16 FORMAT_STEREO16}</td></tr></table>
-     * @param data       the sample data
-     * @param frequency  the data frequency
-     */
-    @NativeType("ALvoid")
-    public static void alBufferData(@NativeType("ALuint") int bufferName, @NativeType("ALenum") int format, @NativeType("ALvoid const *") ShortBuffer data , @NativeType("ALsizei") int frequency)
-    {
-        nalBufferData(bufferName, format, memAddress(data), data.remaining() < < 1, frequency);
-    }
-
-    /**
-     * Sets the sample data of the specified buffer.
-     *
-     * <p>The data specified is copied to an internal software, or if possible, hardware buffer. The implementation is free to apply decompression, conversion,
-     * resampling, and filtering as needed.</p>
-     *
-     * <p>8-bit data is expressed as an unsigned value over the range 0 to 255, 128 being an audio output level of zero.</p>
-     *
-     * <p>16-bit data is expressed as a signed value over the range -32768 to 32767, 0 being an audio output level of zero. Byte order for 16-bit values is
-     * determined by the native format of the CPU.</p>
-     *
-     * <p>Stereo data is expressed in an interleaved format, left channel sample followed by the right channel sample.</p>
-     *
-     * <p>Buffers containing audio data with more than one channel will be played without 3D spatialization features – these formats are normally used for
-     * background music.</p>
-     *
-     * @param bufferName the buffer to modify
-     * @param format     the data format. One of:<br><table><tr><td>{@link #AL_FORMAT_MONO8 FORMAT_MONO8}</td><td>{@link #AL_FORMAT_MONO16 FORMAT_MONO16}</td><td>{@link #AL_FORMAT_STEREO8 FORMAT_STEREO8}</td><td>{@link #AL_FORMAT_STEREO16 FORMAT_STEREO16}</td></tr></table>
-     * @param data       the sample data
-     * @param frequency  the data frequency
-     */
-    @NativeType("ALvoid")
-    public static void alBufferData(@NativeType("ALuint") int bufferName, @NativeType("ALenum") int format, @NativeType("ALvoid const *") IntBuffer data , @NativeType("ALsizei") int frequency)
-    {
-        nalBufferData(bufferName, format, memAddress(data), data.remaining() < < 2, frequency);
-    }
-
-    /**
-     * Sets the sample data of the specified buffer.
-     *
-     * <p>The data specified is copied to an internal software, or if possible, hardware buffer. The implementation is free to apply decompression, conversion,
-     * resampling, and filtering as needed.</p>
-     *
-     * <p>8-bit data is expressed as an unsigned value over the range 0 to 255, 128 being an audio output level of zero.</p>
-     *
-     * <p>16-bit data is expressed as a signed value over the range -32768 to 32767, 0 being an audio output level of zero. Byte order for 16-bit values is
-     * determined by the native format of the CPU.</p>
-     *
-     * <p>Stereo data is expressed in an interleaved format, left channel sample followed by the right channel sample.</p>
-     *
-     * <p>Buffers containing audio data with more than one channel will be played without 3D spatialization features – these formats are normally used for
-     * background music.</p>
-     *
-     * @param bufferName the buffer to modify
-     * @param format     the data format. One of:<br><table><tr><td>{@link #AL_FORMAT_MONO8 FORMAT_MONO8}</td><td>{@link #AL_FORMAT_MONO16 FORMAT_MONO16}</td><td>{@link #AL_FORMAT_STEREO8 FORMAT_STEREO8}</td><td>{@link #AL_FORMAT_STEREO16 FORMAT_STEREO16}</td></tr></table>
-     * @param data       the sample data
-     * @param frequency  the data frequency
-     */
-    @NativeType("ALvoid")
-    public static void alBufferData(@NativeType("ALuint") int bufferName, @NativeType("ALenum") int format, @NativeType("ALvoid const *") FloatBuffer data , @NativeType("ALsizei") int frequency)
-    {
-        nalBufferData(bufferName, format, memAddress(data), data.remaining() < < 2, frequency);
-    }
+    fun bufferData(buffer: AlBuffer, format: AlFormat, data: Buffer, frequency: Int) =
+            AL10.nalBufferData(buffer.name, format.i, data.adr, data.rem, frequency)
 
     // --- [ alGetEnumValue ] ---
 
-    /** Unsafe version of: {@link #alGetEnumValue GetEnumValue} */
-    public static int nalGetEnumValue(long enumName)
-    {
-        long __functionAddress = AL . getICD ().alGetEnumValue;
-        return invokePI(enumName, __functionAddress);
-    }
-
     /**
      * Returns the enumeration value of the specified enum.
      *
      * @param enumName the enum name
      */
-    @NativeType("ALuint")
-    public static int alGetEnumValue(@NativeType("ALchar const *") ByteBuffer enumName)
-    {
-        if (CHECKS) {
-            checkNT1(enumName);
-        }
-        return nalGetEnumValue(memAddress(enumName));
-    }
-
-    /**
-     * Returns the enumeration value of the specified enum.
-     *
-     * @param enumName the enum name
-     */
-    @NativeType("ALuint")
-    public static int alGetEnumValue(@NativeType("ALchar const *") CharSequence enumName)
-    {
-        MemoryStack stack = stackGet (); int stackPointer = stack . getPointer ();
-        try {
-            stack.nASCII(enumName, true);
-            long enumNameEncoded = stack . getPointerAddress ();
-            return nalGetEnumValue(enumNameEncoded);
-        } finally {
-            stack.setPointer(stackPointer);
-        }
-    }
+    infix fun getEnumValue(enumName: CharSequence): Int =
+            AL10.alGetEnumValue(enumName)
 
     // --- [ alGetProcAddress ] ---
 
-    /** Unsafe version of: {@link #alGetProcAddress GetProcAddress} */
-    public static long nalGetProcAddress(long funcName)
-    {
-        long __functionAddress = AL . getICD ().alGetProcAddress;
-        return invokePP(funcName, __functionAddress);
-    }
-
     /**
      * Retrieves extension entry points.
      *
@@ -909,48 +708,11 @@ interface al10 {
      *
      * @param funcName the function name
      */
-    @NativeType("void *")
-    public static long alGetProcAddress(@NativeType("ALchar const *") ByteBuffer funcName)
-    {
-        if (CHECKS) {
-            checkNT1(funcName);
-        }
-        return nalGetProcAddress(memAddress(funcName));
-    }
-
-    /**
-     * Retrieves extension entry points.
-     *
-     * <p>Returns {@code NULL} if no entry point with the name funcName can be found. Implementations are free to return {@code NULL} if an entry point is present, but not
-     * applicable for the current context. However the specification does not guarantee this behavior.</p>
-     *
-     * <p>Applications can use alGetProcAddress to obtain core API entry points, not just extensions. This is the recommended way to dynamically load and unload
-     * OpenAL DLL's as sound drivers.</p>
-     *
-     * @param funcName the function name
-     */
-    @NativeType("void *")
-    public static long alGetProcAddress(@NativeType("ALchar const *") CharSequence funcName)
-    {
-        MemoryStack stack = stackGet (); int stackPointer = stack . getPointer ();
-        try {
-            stack.nASCII(funcName, true);
-            long funcNameEncoded = stack . getPointerAddress ();
-            return nalGetProcAddress(funcNameEncoded);
-        } finally {
-            stack.setPointer(stackPointer);
-        }
-    }
+    infix fun getProcAddress(funcName: CharSequence): Adr =
+            AL10.alGetProcAddress(funcName)
 
     // --- [ alIsExtensionPresent ] ---
 
-    /** Unsafe version of: {@link #alIsExtensionPresent IsExtensionPresent} */
-    public static boolean nalIsExtensionPresent(long extName)
-    {
-        long __functionAddress = AL . getICD ().alIsExtensionPresent;
-        return invokePZ(extName, __functionAddress);
-    }
-
     /**
      * Verifies that a given extension is available for the current context and the device it is associated with.
      *
@@ -959,33 +721,6 @@ interface al10 {
      *
      * @param extName the extension name
      */
-    @NativeType("ALCboolean")
-    public static boolean alIsExtensionPresent(@NativeType("ALchar const *") ByteBuffer extName)
-    {
-        if (CHECKS) {
-            checkNT1(extName);
-        }
-        return nalIsExtensionPresent(memAddress(extName));
-    }
-
-    /**
-     * Verifies that a given extension is available for the current context and the device it is associated with.
-     *
-     * <p>Invalid and unsupported string tokens return ALC_FALSE. {@code extName} is not case sensitive – the implementation will convert the name to all
-     * upper-case internally (and will express extension names in upper-case).</p>
-     *
-     * @param extName the extension name
-     */
-    @NativeType("ALCboolean")
-    public static boolean alIsExtensionPresent(@NativeType("ALchar const *") CharSequence extName)
-    {
-        MemoryStack stack = stackGet (); int stackPointer = stack . getPointer ();
-        try {
-            stack.nASCII(extName, true);
-            long extNameEncoded = stack . getPointerAddress ();
-            return nalIsExtensionPresent(extNameEncoded);
-        } finally {
-            stack.setPointer(stackPointer);
-        }
-    }
+    infix fun isExtensionPresent(extName: CharSequence): Boolean =
+            AL10.alIsExtensionPresent(extName)
 }
