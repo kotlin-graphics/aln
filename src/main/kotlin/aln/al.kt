@@ -42,7 +42,7 @@ object al : al10, al11 {
         var name: String? = null
         if (device isExtensionPresent "ALC_ENUMERATE_ALL_EXT")
             name = device.allDeviceSpecifier
-        if (name == null || device.error != AlcError.NO_ERROR)
+        if (name == null || device.error != AlcError.NONE)
             name = device.deviceSpecifier
         println("Opened \"$name\"")
 

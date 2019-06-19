@@ -1,6 +1,12 @@
 package aln
 
+import aln.identifiers.AlBuffer
 import aln.identifiers.AlSource
+import glm_.func.cos
+import glm_.func.sin
+import glm_.glm
+import glm_.vec2.Vec2
+import glm_.vec3.Vec3
 import io.kotlintest.specs.StringSpec
 import kool.IntBuffer
 import kool.lib.isEmpty
@@ -79,7 +85,7 @@ fun hrtf(hrtfName: String?, soundName: String) {
 //        soundname = argv[0]
 //    }
 
-    /* Enumerate available HRTFs, and reset the device using one. */
+    // Enumerate available HRTFs, and reset the device using one.
     val numHrtf = device.NUM_HRTF_SPECIFIERS_SOFT
     if (numHrtf == 0)
         println("No HRTFs found")
@@ -115,7 +121,7 @@ fun hrtf(hrtfName: String?, soundName: String) {
             println("Failed to reset device: ${device.error}")
     }
 
-    /* Check if HRTF is enabled, and show which is being used. */
+    // Check if HRTF is enabled, and show which is being used.
     val hrtfState = device getBoolean ALC_HRTF_SOFT
     if (!hrtfState)
         println("HRTF not enabled!")
@@ -124,52 +130,49 @@ fun hrtf(hrtfName: String?, soundName: String) {
         println("HRTF enabled, using $name")
     }
 
-    /* Load the sound into a buffer. */
-    val buffer = soundName.toByteBuffer()
-    if (buffer.isEmpty()) {
+    // Load the sound into a buffer.
+    val buffer = AlBuffer.gen()
+    val (vorbis, sampleRate) = readVorbis(soundName)
+    if (vorbis.isEmpty()) {
         al.close()
         exitProcess(1)
     }
+    buffer.data(AlFormat.MONO16, vorbis, sampleRate)
 
-    /* Create the source to play the sound with. */
+    // Create the source to play the sound with.
     val source = AlSource.gen().apply {
-        alSourcei(source, AL_SOURCE_RELATIVE, AL_TRUE)
-        alSource3f(source, AL_POSITION, 0.0f, 0.0f, -1.0f)
-        alSourcei(source, AL_BUFFER, buffer)
+        relative = true
+        position = Vec3(0f, 0f, -1f)
+        this.buffer = buffer
     }
-    assert(alGetError() == AL_NO_ERROR && "Failed to setup sound source")
+    assert(al.error == AlError.NONE) { "Failed to setup sound source" }
 
-    /* Play the sound until it finishes. */
-    angle = 0.0
-    alSourcePlay(source)
+    // Play the sound until it finishes.
+    var angle = 0.0
+    source.play()
     do {
-        al_nssleep(10000000)
+        Thread.sleep(10)
 
-        /* Rotate the source around the listener by about 1/4 cycle per second,
-         * and keep it within -pi...+pi.
-         */
-        angle += 0.01 * M_PI * 0.5
-        if (angle > M_PI)
-            angle -= M_PI * 2.0
+        // Rotate the source around the listener by about 1/4 cycle per second, and keep it within -pi...+pi.
+        angle += 0.01 * glm.PIf * 0.5
+        if (angle > glm.PIf)
+            angle -= glm.PIf * 2.0
 
         /* This only rotates mono sounds. */
-        alSource3f(source, AL_POSITION, (ALfloat) sin (angle), 0.0f, -(ALfloat) cos (angle))
+        source.position = Vec3(angle.sin, 0f, -(angle.cos))
 
-        if (hasAngleExt) {
-            /* This rotates stereo sounds with the AL_EXT_STEREO_ANGLES
-             * extension. Angles are specified counter-clockwise in radians.
-             */
-            ALfloat angles [2] = { (ALfloat)(M_PI / 6.0 - angle), (ALfloat)(-M_PI/6.0-angle) }
-            alSourcefv(source, AL_STEREO_ANGLES, angles)
-        }
+        if (hasAngleExt)
+        /* This rotates stereo sounds with the AL_EXT_STEREO_ANGLES
+         * extension. Angles are specified counter-clockwise in radians.             */
+            source.stereoAngles = Vec2(glm.PIf / 6 - angle, -glm.PIf / 6.0 - angle)
 
-        alGetSourcei(source, AL_SOURCE_STATE, & state)
-    } while (alGetError() == AL_NO_ERROR && state == AL_PLAYING)
+        val state = source.state
+
+    } while (al.error == AlError.NONE && state == SourceState.PLAYING)
 
     /* All done. Delete resources, and close down SDL_sound and OpenAL. */
-    alDeleteSources(1, & source)
-    alDeleteBuffers(1, & buffer)
+    source.delete()
+    buffer.delete()
 
-    Sound_Quit()
-    CloseAL()
+    al.close()
 }

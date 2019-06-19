@@ -4,8 +4,9 @@ import aln.SourceState
 import aln.SourceType
 import aln.al
 import glm_.bool
+import glm_.i
+import glm_.vec2.Vec2
 import glm_.vec3.Vec3
-import gln.vec3Address
 import kool.*
 import org.lwjgl.openal.AL10
 import java.nio.IntBuffer
@@ -39,21 +40,23 @@ inline class AlSource(val name: Int) {
 
     val direction: Vec3
         get() = Stack.vec3Address { AL10.nalGetSourcefv(name, AL10.AL_DIRECTION, it) }
-    val position: Vec3
+    var position: Vec3
         get() = Stack.vec3Address { AL10.nalGetSourcefv(name, AL10.AL_POSITION, it) }
+        set(value) = AL10.alSource3f(name, AL10.AL_POSITION, value.x, value.y, value.z)
     val velocity: Vec3
         get() = Stack.vec3Address { AL10.nalGetSourcefv(name, AL10.AL_VELOCITY, it) }
 
     val looping: Boolean
         get() = AL10.alGetSourcei(name, AL10.AL_LOOPING).bool
 
-    val buffer: AlBuffer
+    var buffer: AlBuffer
         get() = AlBuffer(AL10.alGetSourcei(name, AL10.AL_BUFFER))
+        set(value) = AL10.alSourcei(name, AL10.AL_BUFFER, value.name)
 
-    val sourceState: SourceState
+    val state: SourceState
         get() = SourceState(AL10.alGetSourcei(name, AL10.AL_SOURCE_STATE))
 
-    val sourceType: SourceType
+    val type: SourceType
         get() = SourceType(AL10.alGetSourcei(name, AL10.AL_SOURCE_TYPE))
 
 
@@ -68,6 +71,14 @@ inline class AlSource(val name: Int) {
     fun pause() = AL10.alSourcePause(name)
     fun stop() = AL10.alSourceStop(name)
     fun rewind() = AL10.alSourceRewind(name)
+
+    var relative: Boolean
+        get() = AL10.alGetSourcei(name, AL10.AL_SOURCE_RELATIVE).bool
+        set(value) = AL10.alSourcei(name, AL10.AL_SOURCE_RELATIVE, value.i)
+
+    var stereoAngles: Vec2
+        get() = Stack.vec2Address{}
+        set(value) = Stack.vec2Address(value){}
 
     companion object {
         fun gen(): AlSource = AlSource(AL10.alGenSources())

@@ -22,7 +22,7 @@ fun String.toByteBuffer(): ByteBuffer {
     }
 }
 
-fun readVorbis(resource: String): ShortBuffer = Stack {
+fun readVorbis(resource: String): Pair<ShortBuffer, Int> = Stack {
     val info = STBVorbisInfo.callocStack(it)
     val buffer = resource.toByteBuffer()
     val error = it.callocInt(1)
@@ -37,5 +37,5 @@ fun readVorbis(resource: String): ShortBuffer = Stack {
     return ShortBuffer(stb_vorbis_stream_length_in_samples(decoder) * channels).apply {
         stb_vorbis_get_samples_short_interleaved(decoder, channels, this)
         stb_vorbis_close(decoder)
-    }
+    } to info.sample_rate()
 }

@@ -34,10 +34,10 @@ import org.lwjgl.openal.*
 
 inline class AlFormat(val i: Int){
     companion object {
-        val FORMAT_MONO8 = AlFormat(AL10.AL_FORMAT_MONO8)
-        val FORMAT_MONO16 = AlFormat(AL10.AL_FORMAT_MONO16)
-        val FORMAT_STEREO8 = AlFormat(AL10.AL_FORMAT_STEREO8)
-        val FORMAT_STEREO16 = AlFormat(AL10.AL_FORMAT_STEREO16)
+        val MONO8 = AlFormat(AL10.AL_FORMAT_MONO8)
+        val MONO16 = AlFormat(AL10.AL_FORMAT_MONO16)
+        val STEREO8 = AlFormat(AL10.AL_FORMAT_STEREO8)
+        val STEREO16 = AlFormat(AL10.AL_FORMAT_STEREO16)
     }
 }
 
@@ -56,7 +56,7 @@ inline class AlcStringQuery(val i: Int) {
 
 inline class AlcError(val i: Int) {
     companion object {
-        val NO_ERROR = AlcError(ALC10.ALC_NO_ERROR)
+        val NONE = AlcError(ALC10.ALC_NO_ERROR)
         val INVALID_DEVICE = AlcError(ALC10.ALC_INVALID_DEVICE)
         val INVALID_CONTEXT = AlcError(ALC10.ALC_INVALID_CONTEXT)
         val INVALID_ENUM = AlcError(ALC10.ALC_INVALID_ENUM)
@@ -67,7 +67,7 @@ inline class AlcError(val i: Int) {
 
 inline class AlError(val i: Int) {
     companion object {
-        val NO_ERROR = AlError(AL10.AL_NO_ERROR)
+        val NONE = AlError(AL10.AL_NO_ERROR)
         val INVALID_NAME = AlError(AL10.AL_INVALID_NAME)
         val INVALID_ENUM = AlError(AL10.AL_INVALID_ENUM)
         val INVALID_VALUE = AlError(AL10.AL_INVALID_VALUE)

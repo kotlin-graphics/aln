@@ -30,8 +30,8 @@ interface al10 {
      * <p>Error codes can be mapped to strings. The alGetString function returns a pointer to a constant (literal) string that is identical to the identifier used
      * for the enumeration value, as defined in the specification.</p>
      */
-    val error: Int
-        get() = AL10.alGetError()
+    val error: AlError
+        get() = AlError(AL10.alGetError())
 
     // --- [ alEnable ] ---
 
